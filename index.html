@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HALWAN HOSPITAL - Pilani | OPD IPD Emergency ICU</title>
+<style>
+  *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{margin:0;background:#eef3fb;color:#111}
+  header{background:#0b5ed7;color:#fff;padding:16px 12px;text-align:center;position:sticky;top:0;z-index:20}
+  header h1{margin:0;font-size:24px;letter-spacing:.3px}
+  header p{margin:6px 0 0;font-size:13px;opacity:.95}
+  .top{display:flex;gap:8px;padding:10px;flex-wrap:wrap;background:#fff;position:sticky;top:78px;z-index:19;border-bottom:1px solid #ddd}
+  .top button{flex:1;min-width:120px;padding:11px;border:0;border-radius:10px;background:#0b5ed7;color:#fff;font-weight:700;cursor:pointer}
+  .top button.active{background:#ffcc00;color:#000}
+  .wrap{padding:12px;max-width:1100px;margin:auto;padding-bottom:40px}
+  .card{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  h2{margin:0 0 10px;font-size:19px;color:#0b5ed7}
+  h3{margin:16px 0 6px;font-size:16px;color:#111}
+  h4{margin:12px 0 4px;font-size:14px}
+  label{font-size:13px;font-weight:700;display:block;margin-top:10px}
+  input,select,textarea{width:100%;padding:10px;margin-top:5px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff}
+  textarea{min-height:70px;resize:vertical}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  @media(max-width:650px){.row,.row3{grid-template-columns:1fr}}
+  .btn{padding:11px 14px;border:0;border-radius:9px;cursor:pointer;font-weight:700;margin-top:8px;font-size:14px}
+  .green{background:#16a34a;color:#fff}.orange{background:#f59e0b;color:#fff}.red{background:#dc2626;color:#fff}.grey{background:#eef2f7}.blue{background:#0b5ed7;color:#fff}.dark{background:#111827;color:#fff}
+  .flex{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .small{font-size:12px;color:#64748b}
+  .pill{display:inline-block;padding:5px 10px;border-radius:20px;background:#eef4ff;font-size:12px;margin:3px;border:1px solid #dbeafe}
+  .dash{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .stat{background:#0b5ed7;color:#fff;padding:14px;border-radius:12px;text-align:center}
+  .stat b{font-size:24px;display:block;margin-top:4px}
+  .stat span{font-size:13px;opacity:.9}
+  @media(max-width:650px){.dash{grid-template-columns:1fr 1fr}}
+  .badge{padding:3px 9px;border-radius:20px;color:#fff;font-size:11px;font-weight:700}
+  .ok{background:#16a34a}.pend{background:#f59e0b}.no{background:#dc2626}.info{background:#0b5ed7}
+  .line{border-top:1px dashed #ddd;margin:14px 0}
+  .item{border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-top:8px;background:#f8fafc}
+  .item b{font-size:14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th,td{border:1px solid #ddd;padding:8px;text-align:left}
+  th{background:#0b5ed7;color:#fff}
+  @media print{.top,header .no-print,.no-print{display:none!important} body{background:#fff}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🏥 HALWAN HOSPITAL - PILANI</h1>
+  <p>OPD • IPD • Emergency • ICU | Pilani, Rajasthan | Dr. Halwan • Dr. M Afsal • Dr. Kunal • Dr. Mukesh • Dr. Kapil • Dr. Sandip</p>
+</header>
+
+<div class="top no-print">
+  <button onclick="showPage('dash',this)" class="active">🏠 Dashboard</button>
+  <button onclick="showPage('opd',this)">📝 OPD / New Patient</button>
+  <button onclick="showPage('ipd',this)">🛏️ IPD List</button>
+  <button onclick="showPage('roster',this)">📋 Duty Roster</button>
+  <button onclick="showPage('masters',this)">⚙️ Doctor / Staff</button>
+</div>
+
+<div class="wrap">
+
+<!-- DASHBOARD -->
+<div id="dash" class="page">
+  <div class="dash">
+    <div class="stat"><span>OPD Aaj</span><b id="sOPD">0</b></div>
+    <div class="stat"><span>IPD Admit</span><b id="sIPD">0</b></div>
+    <div class="stat"><span>Discharge</span><b id="sDis">0</b></div>
+    <div class="stat"><span>Collection ₹</span><b id="sAmt">0</b></div>
+  </div>
+  <div class="card">
+    <h2>🕒 Abhi Duty Pe Kaun Hai? - Live Board</h2>
+    <div id="liveDuty"></div>
+    <p class="small" id="liveTime"></p>
+    <p class="small">Shift Rule: Morning 8 AM - 2 PM | Evening 2 PM - 8 PM | Night 8 PM - 8 AM (Raat 12 ke baad bhi Night)</p>
+  </div>
+  <div class="card">
+    <h2>🔍 Search Patient</h2>
+    <input id="searchBox" placeholder="Naam / Phone / Bed No. / Gaon se dhoondho..." oninput="renderIPD()">
+    <div class="flex" style="margin-top:10px">
+      <button class="btn grey" onclick="setFilter('ALL')">Sab</button>
+      <button class="btn grey" onclick="setFilter('OPD')">OPD</button>
+      <button class="btn grey" onclick="setFilter('IPD')">IPD Admit</button>
+      <button class="btn grey" onclick="setFilter('DIS')">Discharge</button>
+      <button class="btn grey" onclick="setFilter('RGHS')">RGHS</button>
+      <button class="btn grey" onclick="setFilter('ECHS')">ECHS</button>
+      <button class="btn grey" onclick="setFilter('MAA')">MAA</button>
+      <button class="btn grey" onclick="setFilter('ICU')">ICU</button>
+    </div>
+    <div class="flex">
+      <button class="btn red" onclick="clearDemo()">🗑️ Demo Delete Karo</button>
+      <button class="btn blue" onclick="window.print()">🖨️ Print List</button>
+    </div>
+  </div>
+  <div id="ipdList"></div>
+</div>
+
+<!-- OPD -->
+<div id="opd" class="page" style="display:none">
+  <div class="card">
+    <h2>📝 OPD - New Patient - Pilani</h2>
+    <div class="row">
+      <div><label>Patient Naam *</label><input id="pName" placeholder="Ramesh Kumar"></div>
+      <div><label>Phone</label><input id="pPhone" placeholder="98XXX XXXXX"></div>
+    </div>
+    <div class="row">
+      <div><label>Age</label><input id="pAge" type="number" placeholder="45"></div>
+      <div><label>Gender</label><select id="pGender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+    </div>
+    <label>Gaon / Address</label><input id="pAddr" placeholder="Pilani / Chirawa / Gaon ka naam">
+    <label>Problem / Bimari</label><input id="pProb" placeholder="Typhoid / Dengue / Bukhar / Chest Pain">
+    <div class="row">
+      <div><label>Doctor *</label><select id="pDoc"></select></div>
+      <div><label>OPD Fees ₹</label><input id="pFees" type="number" value="200"></div>
+    </div>
+    <div class="row">
+      <div><label>Payment Type</label><select id="pPay"><option>Cash</option><option>Cashless</option><option>UPI</option></select></div>
+      <div><label>Scheme</label><select id="pScheme"><option>Cash</option><option>RGHS</option><option>ECHS</option><option>MAA</option><option>PMJAY</option><option>TPA</option><option>Insurance</option><option>Other</option></select></div>
+    </div>
+    <label>Card No. / RGHS Card / ECHS Card / Pre-Auth No.</label><input id="pCard" placeholder="Card No. yahan likho">
+    <div class="flex">
+      <button class="btn green" onclick="savePatient('OPD')">✅ Dawai Deke Ghar Bhejo - OPD Done</button>
+      <button class="btn orange" onclick="savePatient('IPD')">🛏️ IPD Me Admit Karo</button>
+    </div>
+    <p class="small">✅ Auto Save ON hai. OPD se IPD me jaane pe Naam / Data dobara nahi likhna padega.</p>
+  </div>
+</div>
+
+<!-- IPD LIST -->
+<div id="ipd" class="page" style="display:none">
+  <div class="card"><h2>🛏️ IPD - Admit Patients</h2><p class="small">Patient pe Click karo - Pura Detail khulega - Dawai, Vitals, Return, Bill, Handover sab.</p></div>
+  <div id="ipdList2"></div>
+</div>
+
+<!-- ROSTER -->
+<div id="roster" class="page" style="display:none">
+  <div class="card">
+    <h2>📋 Duty Roster - Tum Banaoge - Tumhara Control</h2>
+    <p class="small">Morning: 8 AM - 2 PM | Evening: 2 PM - 8 PM | Night: 8 PM - 8 AM</p>
+    <div class="row">
+      <div><label>Date</label><input id="rDate" type="date"></div>
+      <div><label>Shift</label><select id="rShift"><option>Morning</option><option>Evening</option><option>Night</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Staff Select Karo</label><select id="rStaff"></select></div>
+      <div><label>Ward</label><select id="rWard"><option>General Ward</option><option>Private Room</option><option>ICU</option><option>Emergency</option><option>Female Ward</option><option>Male Ward</option></select></div>
+    </div>
+    <div class="row">
+      <div><label>Status</label><select id="rStatus"><option>Duty</option><option>Leave</option><option>Swap</option><option>Absent - Reliever</option></select></div>
+      <div><label>Note - Swap / Leave wajah</label><input id="rNote" placeholder="Kis ki jagah, kyo?"></div>
+    </div>
+    <button class="btn blue" onclick="addRoster()">➕ Roster Me Add Karo</button>
+    <div class="flex"><button class="btn grey" onclick="window.print()">🖨️ Roster Print</button></div>
+    <div id="rosterList"></div>
+  </div>
+</div>
+
+<!-- MASTERS -->
+<div id="masters" class="page" style="display:none">
+  <div class="card">
+    <h2>👨‍⚕️ Doctor Master - Add / Delete</h2>
+    <div class="row"><div><input id="newDoc" placeholder="Dr. Naya Naam"></div><div><button class="btn green" onclick="addDoc()">➕ Doctor Add Karo</button></div></div>
+    <div id="docList"></div>
+    <p class="small">Naam galat ho to Delete karke dobara sahi likh do - Edit = Delete + Add</p>
+  </div>
+  <div class="card">
+    <h2>👩‍⚕️ Staff Master - Add / Delete</h2>
+    <div class="row"><div><input id="newStaffName" placeholder="Staff Naam - Sunita"></div><div><input id="newStaffPhone" placeholder="Phone No."></div></div>
+    <div class="row"><div><select id="newStaffRole"><option>Nurse</option><option>Ward Boy</option><option>Pharmacy</option><option>Cleaner</option><option>Reception</option></select></div><div><button class="btn green" onclick="addStaff()">➕ Staff Add Karo</button></div></div>
+    <div id="staffList"></div>
+  </div>
+</div>
+
+<!-- DETAIL -->
+<div id="detail" class="page" style="display:none"></div>
+
+</div>
+
+<script>
+// ---------- DATA ----------
+let DB = JSON.parse(localStorage.getItem('halwan_v3_final') || 'null');
+if(!DB){
+  DB = {
+    doctors:["Dr. Halwan","Dr. M Afsal","Dr. Kunal","Dr. Mukesh","Dr. Kapil","Dr. Sandip"],
+    staff:[
+      {name:"Sunita",role:"Nurse",phone:""},
+      {name:"Pooja",role:"Nurse",phone:""},
+      {name:"Kavita",role:"Nurse",phone:""},
+      {name:"Raju",role:"Ward Boy",phone:""},
+      {name:"Amit",role:"Ward Boy",phone:""}
+    ],
+    roster:[],
+    patients:[
+      {id:1,name:"Ramesh",age:45,phone:"9829000001",gender:"Male",addr:"Pilani",prob:"Typhoid",doc:"Dr. M Afsal",fees:200,pay:"Cash",scheme:"Cash",card:"-",status:"IPD",ward:"General Ward",bed:"G-1",admit:new Date().toLocaleString(),advanceList:[{amt:1000,time:new Date().toLocaleString(),note:"Pehla Advance"}],dailyCharge:500,wardHistory:[{from:"-",to:"General Ward",time:new Date().toLocaleString(),by:"Reception",reason:"Admit"}],meds:[{name:"Crocin 650",dose:"1-1-1, 3 Din",by:"Dr. M Afsal",time:new Date().toLocaleString()}],issued:[{name:"Crocin 650",qty:10,by:"Pharmacy",time:"10:00 AM"}],given:[{name:"Crocin 650",time:"10:15 AM",staff:"Sunita - Nurse",shift:"Morning",status:"Laga Di"}],returns:[],vitals:[{bp:"120/80",temp:"101",pulse:"88",oxy:"98",sugar:"110",staff:"Sunita",shift:"Morning",time:"10:00 AM"}],handover:"Bukhar pe dhyan dena, ORS pilate raho.",round:"Typhoid - Crocin continue, ORS",invest:[{test:"Blood Test - Widal",status:"Report Aayi"}],dischargeNote:"",homeMeds:"",followUp:""},
+      {id:2,name:"Sunita Devi",age:38,phone:"9829000002",gender:"Female",addr:"Pilani",prob:"Dengue",doc:"Dr. Kunal",fees:200,pay:"Cashless",scheme:"RGHS",card:"RGHS-12345",status:"IPD",ward:"Female Ward",bed:"F-2",admit:new Date().toLocaleString(),advanceList:[],dailyCharge:500,wardHistory:[],meds:[],issued:[],given:[],returns:[],vitals:[],handover:"",round:"",invest:[],dischargeNote:"",homeMeds:"",followUp:""},
+      {id:3,name:"Ram Singh",age:62,phone:"9829000003",gender:"Male",addr:"Chirawa",prob:"Chest Pain",doc:"Dr. Mukesh",fees:0,pay:"Cashless",scheme:"ECHS",card:"ECHS-9876",status:"IPD",ward:"ICU",bed:"ICU-1",admit:new Date().toLocaleString(),advanceList:[],dailyCharge:1500,wardHistory:[{from:"Emergency",to:"ICU",time:new Date().toLocaleString(),by:"Dr. Mukesh",reason:"Chest Pain - ICU me rakha"}],meds:[],issued:[],given:[],returns:[],vitals:[],handover:"",round:"",invest:[{test:"ECG",status:"Order Hua"}],dischargeNote:"",homeMeds:"",followUp:""},
+      {id:4,name:"Pooja",age:29,phone:"9829000004",gender:"Female",addr:"Pilani",prob:"Operation - Appendix",doc:"Dr. Kapil",fees:200,pay:"Cashless",scheme:"MAA",card:"MAA-555",status:"IPD",ward:"Private Room",bed:"P-1",admit:new Date().toLocaleString(),advanceList:[{amt:2000,time:new Date().toLocaleString(),note:"Advance"}],dailyCharge:1000,wardHistory:[],meds:[],issued:[],given:[],returns:[{name:"Injection X",qty:1,reason:"Doctor ne mana kar diya",by:"Sunita",time:"11 AM"}],vitals:[],handover:"",round:"",invest:[],dischargeNote:"",homeMeds:"",followUp:""}
+    ]
+  };
+  saveDB();
+}
+function saveDB(){ localStorage.setItem('halwan_v3_final', JSON.stringify(DB)); }
+
+// ---------- NAV ----------
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.getElementById(id).style.display='block';
+  document.querySelectorAll('.top button').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderAll();
+}
+function getShift(){
+  let h=new Date().getHours();
+  if(h>=8 && h<14) return "Morning";
+  if(h>=14 && h<20) return "Evening";
+  return "Night";
+}
+function autoStaff(shift){
+  let today=new Date().toISOString().slice(0,10);
+  let r=DB.roster.find(x=>x.date===today && x.shift===shift && x.status==="Duty");
+  return r ? r.staff : "— (Roster me nahi hai, Manual chun lo)";
+}
+function totalAdvance(p){ return (p.advanceList||[]).reduce((a,x)=>a+(+x.amt||0),0); }
+function totalBill(p){ return (+p.fees||0) + (+p.dailyCharge||0) + totalAdvance(p)*0; }
+function bakiPaisa(p){ return totalBill(p) - totalAdvance(p); }
+
+// ---------- RENDER ----------
+function renderAll(){ renderDocs(); renderStaff(); renderRoster(); renderIPD(); renderDash(); }
+function renderDocs(){
+  document.getElementById('pDoc').innerHTML=DB.doctors.map(d=>`<option>${d}</option>`).join('');
+  document.getElementById('docList').innerHTML=DB.doctors.map((d,i)=>`<span class="pill">${d} <a href="#" onclick="delDoc(${i});return false">✕</a></span>`).join('');
+}
+function renderStaff(){
+  document.getElementById('rStaff').innerHTML=DB.staff.map(x=>`<option>${x.name} - ${x.role}</option>`).join('');
+  document.getElementById('staffList').innerHTML=DB.staff.map((x,i)=>`<span class="pill">${x.name} (${x.role}) ${x.phone||''} <a href="#" onclick="delStaff(${i});return false">✕</a></span>`).join('');
+}
+function addDoc(){ let v=document.getElementById('newDoc').value.trim(); if(!v) return alert("Naam likho"); DB.doctors.push(v); document.getElementById('newDoc').value=""; saveDB(); renderAll(); }
+function delDoc(i){ if(confirm("Doctor delete karna hai?")){ DB.doctors.splice(i,1); saveDB(); renderAll(); } }
+function addStaff(){ let n=document.getElementById('newStaffName').value.trim(); if(!n) return alert("Naam likho"); DB.staff.push({name:n,role:document.getElementById('newStaffRole').value,phone:document.getElementById('newStaffPhone').value}); document.getElementById('newStaffName').value=""; document.getElementById('newStaffPhone').value=""; saveDB(); renderAll(); }
+function delStaff(i){ if(confirm("Staff delete?")){ DB.staff.splice(i,1); saveDB(); renderAll(); } }
+
+// ---------- ROSTER ----------
+function addRoster(){
+  let d=document.getElementById('rDate').value; if(!d) return alert("Date chun lo");
+  DB.roster.push({date:d,shift:document.getElementById('rShift').value,staff:document.getElementById('rStaff').value,ward:document.getElementById('rWard').value,status:document.getElementById('rStatus').value,note:document.getElementById('rNote').value});
+  saveDB(); renderRoster(); renderDash();
+}
+function renderRoster(){
+  document.getElementById('rosterList').innerHTML="<h3>Roster List</h3>"+(DB.roster.map((r,i)=>`<div class="card">${r.date} | ${r.shift} | ${r.staff} | ${r.ward} | ${r.status} ${r.note?'- '+r.note:''} <button class="btn red" onclick="DB.roster.splice(${i},1);saveDB();renderRoster();renderDash()">Delete</button></div>`).join('')||"Abhi Roster khali hai - Upar se banao");
+}
+
+// ---------- PATIENT ----------
+function savePatient(type){
+  let name=document.getElementById('pName').value.trim(); if(!name) return alert("Naam likho");
+  let p={id:Date.now(),name,phone:document.getElementById('pPhone').value,age:document.getElementById('pAge').value,gender:document.getElementById('pGender').value,addr:document.getElementById('pAddr').value,prob:document.getElementById('pProb').value,doc:document.getElementById('pDoc').value,fees:+document.getElementById('pFees').value||0,pay:document.getElementById('pPay').value,scheme:document.getElementById('pScheme').value,card:document.getElementById('pCard').value,status:type,ward:type==="IPD"?"General Ward":"-",bed:type==="IPD"?"G-?":"-",admit:new Date().toLocaleString(),advanceList:[],dailyCharge:type==="IPD"?500:0,wardHistory:type==="IPD"?[{from:"-",to:"General Ward",time:new Date().toLocaleString(),by:"Reception",reason:"Admit"}]:[],meds:[],issued:[],given:[],returns:[],vitals:[],handover:"",round:"",invest:[],dischargeNote:"",homeMeds:"",followUp:""};
+  DB.patients.unshift(p); saveDB();
+  ["pName","pPhone","pAge","pAddr","pProb","pCard"].forEach(id=>document.getElementById(id).value="");
+  alert(type==="IPD"?"IPD Me Admit Ho Gaya ✅":"OPD Done ✅"); showPage('dash');
+}
+let filter='ALL';
+function setFilter(f){ filter=f; renderIPD(); }
+function renderDash(){
+  document.getElementById('sOPD').innerText=DB.patients.filter(p=>p.status==="OPD").length;
+  document.getElementById('sIPD').innerText=DB.patients.filter(p=>p.status==="IPD").length;
+  document.getElementById('sDis').innerText=DB.patients.filter(p=>p.status==="DIS").length;
+  document.getElementById('sAmt').innerText=DB.patients.reduce((a,p)=>a+(+p.fees||0)+totalAdvance(p),0);
+  let sh=getShift();
+  document.getElementById('liveTime').innerText="Abhi Time: "+new Date().toLocaleString()+" | Shift: "+sh+" | Auto Staff: "+autoStaff(sh);
+  document.getElementById('liveDuty').innerHTML=DB.roster.filter(r=>r.date===new Date().toISOString().slice(0,10)).map(r=>`<span class="pill">${r.shift}: ${r.staff} - ${r.status} - ${r.ward}</span>`).join('')||"Aaj ka Roster khali hai - Roster Page se banao";
+}
+function renderIPD(){
+  let q=(document.getElementById('searchBox')?.value||"").toLowerCase();
+  let list=DB.patients.filter(p=>{
+    if(filter==="OPD" && p.status!=="OPD") return false;
+    if(filter==="IPD" && p.status!=="IPD") return false;
+    if(filter==="DIS" && p.status!=="DIS") return false;
+    if(["RGHS","ECHS","MAA"].includes(filter) && p.scheme!==filter) return false;
+    if(filter==="ICU" && p.ward!=="ICU") return false;
+    if(q && !(p.name.toLowerCase().includes(q)||(p.phone||"").includes(q)||(p.bed||"").toLowerCase().includes(q)||(p.addr||"").toLowerCase().includes(q))) return false;
+    return true;
+  });
+  let html=list.map(p=>`<div class="card"><b>${p.name}</b> - ${p.prob} | ${p.doc} | ${p.ward} ${p.bed} | ${p.scheme} ${p.card} | <span class="badge ${p.status==="IPD"?"ok":p.status==="OPD"?"pend":"no"}">${p.status}</span><div class="flex"><button class="btn blue" onclick="openPatient(${p.id})">📂 Kholo - Dawai / Vitals / Bill</button><button class="btn grey" onclick="editPatient(${p.id})">✏️ Edit</button><button class="btn red" onclick="delPatient(${p.id})">🗑️ Delete</button></div></div>`).join('')||"<div class='card'>Koi Patient nahi mila</div>";
+  document.getElementById('ipdList').innerHTML=html;
+  if(document.getElementById('ipdList2')) document.getElementById('ipdList2').innerHTML=html;
+}
+function delPatient(id){ if(confirm("Delete karna hai?")){ DB.patients=DB.patients.filter(p=>p.id!==id); saveDB(); renderIPD(); renderDash(); } }
+function editPatient(id){
+  let p=DB.patients.find(x=>x.id===id);
+  let n=prompt("Naam Edit karo:",p.name); if(n!==null) p.name=n;
+  let w=prompt("Ward Edit karo:",p.ward); if(w!==null) p.ward=w;
+  let b=prompt("Bed Edit karo:",p.bed); if(b!==null) p.bed=b;
+  let d=prompt("Doctor Edit karo:",p.doc); if(d!==null) p.doc=d;
+  let ph=prompt("Phone Edit karo:",p.phone); if(ph!==null) p.phone=ph;
+  saveDB(); renderIPD();
+}
+function clearDemo(){ if(confirm("Sab Demo Delete karna hai?")){ DB.patients=[]; saveDB(); renderAll(); } }
+
+// ---------- DETAIL ----------
+function openPatient(id){
+  let p=DB.patients.find(x=>x.id===id); if(!p) return;
+  let sh=getShift(); let auto=autoStaff(sh);
+  let tot=totalBill(p); let adv=totalAdvance(p); let baki=tot-adv;
+  let html=`<div class="card"><button class="btn grey no-print" onclick="showPage('dash')">⬅️ Wapas</button><button class="btn blue no-print" onclick="window.print()">🖨️ Print Slip</button>
+  <h2>${p.name} - ${p.prob}</h2>
+  <p>${p.doc} | ${p.ward} ${p.bed} | ${p.scheme} ${p.card} | Phone: ${p.phone} | Gaon: ${p.addr} | Admit: ${p.admit} | Status: ${p.status}</p>
+  <div class="line"></div>
+  <h3>🛏️ Ward / Bed Change - History ke saath</h3>
+  <div class="row"><div><label>Naya Ward</label><select id="eWard"><option>General Ward</option><option>Private Room</option><option>ICU</option><option>Emergency</option><option>Female Ward</option><option>Male Ward</option></select></div><div><label>Naya Bed</label><input id="eBed" value="${p.bed}"></div></div>
+  <label>Ward Badalne ki Wajah</label><input id="eWardReason" placeholder="ICU me shift kyo kiya?">
+  <button class="btn blue" onclick="saveWard(${p.id})">💾 Ward / Bed Save</button>
+  <div>${(p.wardHistory||[]).map(h=>`<div class="item">${h.time} - ${h.from} → ${h.to} - ${h.by} - ${h.reason||''}</div>`).join('')||"<p class='small'>Abhi Ward History khali hai</p>"}</div>
+
+  <div class="line"></div>
+  <h3>💰 Billing - IPD ka Pura Byora</h3>
+  <div class="row"><div><label>OPD Fees ₹</label><input id="eFees" type="number" value="${p.fees}"></div><div><label>Roz Charge ₹ - Ward ke hisaab se</label><input id="eCharge" type="number" value="${p.dailyCharge||500}"></div></div>
+  <label>Advance Jama Karo ₹</label><input id="eAdvAmt" type="number" placeholder="Kitna Jama hua?">
+  <label>Advance Note</label><input id="eAdvNote" placeholder="Cash / UPI / Kiske paas diya">
+  <button class="btn green" onclick="addAdvance(${p.id})">➕ Advance Add Karo</button>
+  <div>${(p.advanceList||[]).map((a,i)=>`<div class="item">₹${a.amt} - ${a.time} - ${a.note||''} <button onclick="delAdvance(${p.id},${i})">✕</button></div>`).join('')||"<p class='small'>Abhi koi Advance nahi hai</p>"}</div>
+  <p><b>Total Bill (Fees + Roz Charge): ₹${tot}</b> | <b>Total Advance: ₹${adv}</b> | <b>Baki: ₹${baki}</b> ${baki<0?`| <b>Refund: ₹${-baki}</b>`:''}</p>
+  <button class="btn blue" onclick="saveBilling(${p.id})">💾 Fees / Charge Save</button>
+
+  <div class="line"></div>
+  <h3>💊 A) Doctor Ne Likhi Dawai</h3>
+  <div class="row"><div><input id="mName" placeholder="Dawai Naam"></div><div><input id="mDose" placeholder="1-1-1 / Kitne Din"></div></div>
+  <button class="btn green" onclick="addMed(${p.id},'meds')">➕ Dawai Likho</button>
+  <div>${p.meds.map((m,i)=>`<div class="item">${m.name} - ${m.dose} - ${m.by} - ${m.time||''} <button onclick="delItem(${p.id},'meds',${i})">✕</button></div>`).join('')}</div>
+
+  <h3>🏥 B) Medical / Pharmacy Se Issue Hui</h3>
+  <div class="row"><div><input id="iName" placeholder="Dawai Naam"></div><div><input id="iQty" type="number" placeholder="Qty"></div></div>
+  <button class="btn green" onclick="addMed(${p.id},'issued')">➕ Issue Karo</button>
+  <div>${p.issued.map((m,i)=>`<div class="item">${m.name} - Qty ${m.qty} - ${m.by} ${m.time||''} <button onclick="delItem(${p.id},'issued',${i})">✕</button></div>`).join('')}</div>
+
+  <h3>💉 C) Marij Ko Lagaai / Di Gayi - Auto Shift + Auto Staff</h3>
+  <p class="small">Abhi Shift: <b>${sh}</b> | Auto Staff: <b>${auto}</b> | Time apne aap aayega</p>
+  <div class="row"><div><input id="gName" placeholder="Kaunsi Dawai Lagaai"></div><div><select id="gStaff">${DB.staff.map(s=>`<option>${s.name} - ${s.role}</option>`).join('')}</select></div></div>
+  <div class="row"><div><select id="gShift"><option>Morning</option><option>Evening</option><option>Night</option></select></div><div><select id="gStatus"><option>Laga Di</option><option>Pending</option><option>Nahi Lagi</option></select></div></div>
+  <button class="btn green" onclick="addGiven(${p.id})">➕ Lagaai Entry Karo</button>
+  <div>${p.given.map((m,i)=>`<div class="item">${m.name} - ${m.time} - ${m.staff} - ${m.shift} - <span class="badge ${m.status==="Laga Di"?"ok":"pend"}">${m.status}</span> <button onclick="delItem(${p.id},'given',${i})">✕</button></div>`).join('')}</div>
+
+  <h3>↩️ D) Dawai Return</h3>
+  <div class="row"><div><input id="rName" placeholder="Kaunsi Dawai Return"></div><div><input id="rQty" type="number" placeholder="Qty"></div></div>
+  <select id="rReason"><option>Doctor ne mana kar diya</option><option>Marij ne mana kar diya</option><option>Galat Dawai</option><option>Expiry</option><option>Dose Change</option></select>
+  <button class="btn red" onclick="addReturn(${p.id})">↩️ Return Karo</button>
+  <div>${p.returns.map((m,i)=>`<div class="item">${m.name} - Qty ${m.qty} - ${m.reason} - ${m.by} ${m.time} <button onclick="delItem(${p.id},'returns',${i})">✕</button></div>`).join('')}</div>
+  <p class="small">Return wali Dawai Bill me alag dikhegi - Double Bill nahi banega.</p>
+
+  <div class="line"></div>
+  <h3>🩺 Vitals - Har Shift Me Alag Entry</h3>
+  <div class="row"><div><input id="vBP" placeholder="BP 120/80"></div><div><input id="vTemp" placeholder="Bukhar 101"></div></div>
+  <div class="row"><div><input id="vPulse" placeholder="Pulse"></div><div><input id="vOxy" placeholder="Oxygen"></div></div>
+  <input id="vSugar" placeholder="Sugar">
+  <button class="btn green" onclick="addVital(${p.id})">➕ Vitals Save - Auto Shift: ${sh} - Auto Staff: ${auto}</button>
+  <div>${p.vitals.map((v,i)=>`<div class="item">${v.bp} | ${v.temp} | Pulse ${v.pulse} | Oxy ${v.oxy} | Sugar ${v.sugar} - ${v.staff} ${v.shift} ${v.time} <button onclick="delItem(${p.id},'vitals',${i})">✕</button></div>`).join('')}</div>
+
+  <h3>🔬 Investigation</h3>
+  <div class="row"><div><input id="invName" placeholder="Blood Test / X-Ray / ECG / Ultrasound"></div><div><select id="invStatus"><option>Order Hua</option><option>Sample Liya</option><option>Report Aayi</option><option>Pending</option></select></div></div>
+  <button class="btn blue" onclick="addInvest(${p.id})">➕ Investigation Add</button>
+  <div>${(p.invest||[]).map((x,i)=>`<div class="item">${x.test} - ${x.status} <button onclick="delItem(${p.id},'invest',${i})">✕</button></div>`).join('')}</div>
+
+  <h3>🔄 Handover - Shift Badalte Time</h3>
+  <textarea id="hText">${p.handover||''}</textarea>
+  <button class="btn blue" onclick="saveHandover(${p.id})">💾 Handover Save</button>
+
+  <h3>📝 Doctor Round Note</h3>
+  <textarea id="roundText" placeholder="Doctor ne kya bola, kya badla...">${p.round||''}</textarea>
+  <button class="btn blue" onclick="saveRound(${p.id})">💾 Round Note Save</button>
+
+  <div class="line"></div>
+  <h3>✅ Discharge</h3>
+  <label>Discharge Summary - Kya bimari thi, kya ilaaj hua</label><textarea id="dNote">${p.dischargeNote||''}</textarea>
+  <label>Ghar pe kaunsi Dawai khani hai - Kitne Din</label><textarea id="dMeds">${p.homeMeds||''}</textarea>
+  <label>Follow-up - Kab wapas aana hai, Kis Doctor ko dikhana hai</label><input id="dFollow" value="${p.followUp||''}" placeholder="3 din baad - Dr. Kunal ko dikhana hai">
+  <button class="btn orange" onclick="saveDischargeNote(${p.id})">💾 Discharge Note Save</button>
+  <button class="btn green" onclick="discharge(${p.id})">✅ Discharge Karo - Final Bill ke saath</button>
+  </div>`;
+  document.querySelectorAll('.page').forEach(x=>x.style.display='none');
+  let d=document.getElementById('detail'); d.style.display='block'; d.innerHTML=html;
+  document.getElementById('eWard').value=p.ward;
+  document.getElementById('gShift').value=sh;
+}
+function saveWard(id){
+  let p=DB.patients.find(x=>x.id===id);
+  let nw=document.getElementById('eWard').value; let nb=document.getElementById('eBed').value; let rs=document.getElementById('eWardReason').value;
+  if(nw!==p.ward){ p.wardHistory=p.wardHistory||[]; p.wardHistory.push({from:p.ward,to:nw,time:new Date().toLocaleString(),by:p.doc,reason:rs||"Ward Change"}); }
+  p.ward=nw; p.bed=nb; saveDB(); alert("Ward / Bed Save Ho Gaya ✅"); openPatient(id);
+}
+function saveBilling(id){
+  let p=DB.patients.find(x=>x.id===id);
+  p.fees=+document.getElementById('eFees').value||0; p.dailyCharge=+document.getElementById('eCharge').value||0;
+  saveDB(); alert("Billing Save ✅"); openPatient(id);
+}
+function addAdvance(id){
+  let p=DB.patients.find(x=>x.id===id); let amt=+document.getElementById('eAdvAmt').value||0; if(!amt) return alert("Amount likho");
+  p.advanceList=p.advanceList||[]; p.advanceList.push({amt,time:new Date().toLocaleString(),note:document.getElementById('eAdvNote').value}); saveDB(); openPatient(id);
+}
+function delAdvance(pid,i){ let p=DB.patients.find(x=>x.id===pid); p.advanceList.splice(i,1); saveDB(); openPatient(pid); }
+function addMed(id,type){
+  let p=DB.patients.find(x=>x.id===id);
+  if(type==='meds'){ let n=document.getElementById('mName').value.trim(); if(!n) return alert("Naam likho"); p.meds.push({name:n,dose:document.getElementById('mDose').value,by:p.doc,time:new Date().toLocaleString()}); }
+  else{ let n=document.getElementById('iName').value.trim(); if(!n) return alert("Naam likho"); p.issued.push({name:n,qty:document.getElementById('iQty').value,by:"Pharmacy",time:new Date().toLocaleTimeString()}); }
+  saveDB(); openPatient(id);
+}
+function addGiven(id){
+  let p=DB.patients.find(x=>x.id===id); let n=document.getElementById('gName').value.trim(); if(!n) return alert("Dawai likho");
+  p.given.push({name:n,time:new Date().toLocaleTimeString(),staff:document.getElementById('gStaff').value,shift:document.getElementById('gShift').value,status:document.getElementById('gStatus').value}); saveDB(); openPatient(id);
+}
+function addReturn(id){
+  let p=DB.patients.find(x=>x.id===id); let n=document.getElementById('rName').value.trim(); if(!n) return alert("Dawai likho");
+  p.returns.push({name:n,qty:document.getElementById('rQty').value,reason:document.getElementById('rReason').value,by:autoStaff(getShift()),time:new Date().toLocaleString()}); saveDB(); alert("Return Record Ban Gaya ✅"); openPatient(id);
+}
+function addVital(id){
+  let p=DB.patients.find(x=>x.id===id);
+  p.vitals.push({bp:document.getElementById('vBP').value,temp:document.getElementById('vTemp').value,pulse:document.getElementById('vPulse').value,oxy:document.getElementById('vOxy').value,sugar:document.getElementById('vSugar').value,staff:autoStaff(getShift()),shift:getShift(),time:new Date().toLocaleString()}); saveDB(); openPatient(id);
+}
+function addInvest(id){
+  let p=DB.patients.find(x=>x.id===id); let t=document.getElementById('invName').value.trim(); if(!t) return alert("Test likho");
+  p.invest=p.invest||[]; p.invest.push({test:t,status:document.getElementById('invStatus').value}); saveDB(); openPatient(id);
+}
+function saveHandover(id){ let p=DB.patients.find(x=>x.id===id); p.handover=document.getElementById('hText').value; saveDB(); alert("Handover Save ✅"); }
+function saveRound(id){ let p=DB.patients.find(x=>x.id===id); p.round=document.getElementById('roundText').value; saveDB(); alert("Round Note Save ✅"); }
+function saveDischargeNote(id){ let p=DB.patients.find(x=>x.id===id); p.dischargeNote=document.getElementById('dNote').value; p.homeMeds=document.getElementById('dMeds').value; p.followUp=document.getElementById('dFollow').value; saveDB(); alert("Discharge Note Save ✅"); }
+function delItem(pid,type,i){ let p=DB.patients.find(x=>x.id===pid); p[type].splice(i,1); saveDB(); openPatient(pid); }
+function discharge(id){
+  let p=DB.patients.find(x=>x.id===id);
+  p.dischargeNote=document.getElementById('dNote')?.value||p.dischargeNote; p.homeMeds=document.getElementById('dMeds')?.value||p.homeMeds; p.followUp=document.getElementById('dFollow')?.value||p.followUp;
+  if(confirm(p.name+" ko Discharge karna hai?")){
+    p.status="DIS"; saveDB();
+    alert("Discharge Ho Gaya ✅\nFinal Bill: ₹"+totalBill(p)+"\nAdvance: ₹"+totalAdvance(p)+"\nBaki: ₹"+(totalBill(p)-totalAdvance(p)));
+    showPage('dash');
+  }
+}
+document.getElementById('rDate').value=new Date().toISOString().slice(0,10);
+renderAll();
+</script>
+</body>
+</html>
